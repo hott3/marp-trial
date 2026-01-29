@@ -2,95 +2,207 @@
 marp: true
 theme: default
 paginate: true
-header: "App state と Ephemeral State と MVVM"
+header: "Widget選び 状態管理に迷わないためのフローチャート"
 footer: "© 2026 hott3"
+style: |
+    table {font-size: 16px;}
 ---
 
-# 状態管理に迷わないためのフローチャート
+# Widget選び<br>状態管理に迷わないためのフローチャート
 
-## App State と Ephemeral State、そしてMVVM
-
-Flutterの状態管理は「どこで管理するか」が明確になれば迷わない
+状態管理は「どこで管理するか」が明確になれば迷わない
 
 ---
 
-# なぜ今、宣言的UIなのか
+# 「宣言的UI」と「命令的UI」 
 
-## 命令的UI vs 宣言的UI
+---
+
+# 宣言的UI vs 命令的UI
 
 **命令的UI（タクシーの例）**
 - 「次の角を右に曲がって、100m進んで、そこで止まってください」
-- 一歩ずつ指示する
+- ひとつずつ結果を得るための段取りを指示する。
 
-**宣言的UI（目的地を伝える）**
+![](image01.png)
+
+---
+
+# 宣言的UI vs 命令的UI
+
+**宣言的UI（タクシーの例）**
 - 「東京駅に行ってください」
 - 結果だけ伝える。ルート（更新処理）はフレームワークが担当
+
+![](image02.png)
+
+---
+
+# 命令的UI
+
+**例：JavaScriptでのボタンの状態管理**
+
+```javascript
+// ボタンの状態が変わるたびに「どう動かすか」を指示する
+if (isActive) {
+  button.classList.add('red');
+  button.textContent = 'ON';
+} else {
+  button.classList.remove('red');
+  button.textContent = 'OFF';
+}
+```
+
+
+---
+
+# 宣言的UI
+
+**例：Flutterでのボタンの状態管理**
+
+```dart
+class _MyButtonState extends State<MyButton> {
+  // 1. 状態（State）を定義
+  bool _isActive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      // 2. 状態に基づいた「あるべき姿」を宣言する
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _isActive ? Colors.red : Colors.white,
+      ),
+      onPressed: () {
+        // 3. 状態を更新するだけで、UIの再描画はフレームワークに任せる
+        setState(() {
+          _isActive = !_isActive;
+        });
+      },
+      child: Text(_isActive ? 'ON' : 'OFF'),
+    );
+  }
+}
+
+
+
+
+
+```
 
 ---
 
 # すべてのUIは状態の結果である
 
-<br />
-<br />
-
 ## `UI = f(state)`
 
-<br />
-
+- Flutterは宣言的UIフレームワークである
 - すべてのUIは状態（データ）の結果である
 - Flutterでは状態が変わるとWidgetが再構築される
 
----
-
-# 「状態」という言葉の曖昧さ
-
-## 状態には2つの種類がある
-
-**Ephemeral State（一時的な状態）**
-- 単一Widgetの中だけで完結する状態
-
-**App State（アプリケーション全体の状態）**
-- アプリケーション全体で共有する状態
-
-どちらに分類するかは厳密ではなく、アプリの成長に応じて変わる
+<small>参照：[Common architecture concepts](https://docs.flutter.dev/app-architecture/concepts)</small>
 
 ---
 
-# 状態は成長する
-
-## Ephemeral State が App State へ昇格することがある
-
-**例: 選択された商品ID**
-
-- 最初: 単一画面内でのみ有効 → **Ephemeral State**
-- 成長後: 詳細画面やカート画面でも必要 → **App State**
-
-アーキテクチャ設計では将来的なリファクタリングも想定する
+# 「状態」って何？🤔
 
 ---
+
+## 「状態」には Ephemeral State と App State の 2つの状態がある
+
+<br>この2つ、聞いたことある人🙋‍♂️
+
+---
+
+### 「状態」には 2つの種類がある
+
+<br>
 
 # Ephemeral State（一時的な状態）
 
-## 単一Widgetの中だけで完結する状態
+- 単一Widgetの中だけで完結する状態
+- 例）`PageView`の現在ページ、選択されているタブ、アニメーションの進行状況
 
-**別名:** UI状態、ローカル状態
+<br>
 
-**例:**
-- `PageView`の現在ページ
-- アニメーションの進行状況
-- `BottomNavigationBar`の選択タブ
+<small>参照：[Differentiate between ephemeral state and app state](https://docs.flutter.dev/data-and-backend/state-mgmt/ephemeral-vs-app#ephemeral-state)</small>
 
 ---
 
-# Ephemeral Stateの実装 - TextFieldの例
+### 「状態」には2つの種類がある
 
-## TextFieldの入力にRiverpodは不要
+<br>
+
+# App State（アプリケーション全体の状態）
+
+- アプリケーション全体で共有する状態、一時的ではない
+- 例）ユーザー設定、ログイン情報、ECサイトのカート
+
+<br>
+
+<small>参照：[Differentiate between ephemeral state and app state](https://docs.flutter.dev/data-and-backend/state-mgmt/ephemeral-vs-app#app-state)</small>
+
+---
+
+## Ephemeral State と App State の 2つの状態がある
+
+## これって、一度実装したらどちらかに変わらないもの？🤔
+
+---
+
+## たとえば、「選択された商品ID」という状態を実装したら<br>今後変わることはない？
+
+単一のWidgetが状態を利用していたから、 **Ephemeral State** にする
+複数のWidgetが状態を利用していたから、 **App State** にする
+
+<img  height="300px" src="https://docs.flutter.dev/assets/images/docs/development/data-and-backend/state-mgmt/ephemeral-vs-app-state.png" alt="Ephemeral State vs App State" />
+
+<br>
+
+<small>引用元：[Differentiate between ephemeral state and app state](https://docs.flutter.dev/data-and-backend/state-mgmt/ephemeral-vs-app#there-is-no-clear-cut-rule)</small>
+
+---
+
+# 答えは「No」🙅‍♂️
+
+→ A. 一度実装したとしても、アプリの成長に応じて変わることがある
+
+<small>※公式でも先の図は「鵜呑み」にしないように示されている</small>
+
+---
+
+# Ephemeral State が App State へ昇格する例
+
+<br>
+
+**例：選択された商品ID**
+
+- リリース当初：単一の詳細画面でのみ利用 → **Ephemeral State**だった
+- アプリ成長後：詳細画面やカート画面でも利用 → **App State**に昇格
+
+<br>
+
+「状態」はアプリの成長に応じてリファクタリングが起こり得るもの
+
+---
+
+リファクタリングが起こり得るのなら、
+
+## 「状態」の責務を明確に分けることが重要になる
+
+Ephemeral State と App State について、責務を明確に分けて考えましょう💡
+
+---
+
+### Ephemeral Stateの実装 - TextFieldの例
+
+HookWidgetを使って、Widget内部一時的な状態を管理するのがシンプル
+1つのクラスで完結する
 
 ```dart
-// HookWidgetの例
 class MyForm extends HookWidget {
   @override
   Widget build(BuildContext context) {
+    // Hookを使ってTextEditingControllerをWidget内部で管理
     final controller = useTextEditingController();
     
     return TextField(controller: controller);
@@ -98,73 +210,101 @@ class MyForm extends HookWidget {
 }
 ```
 
-なぜRiverpodを使う必要がないのか: 他のWidgetと共有する必要がないため
-
 ---
 
-# flutter_hooksで簡潔に
+### App Stateの実装 - カート機能の例
 
-## flutter_hooksを使うとStatefulWidgetのボイラープレートが不要
+ConsumerWidgetを使って、Widget外部で状態を管理するのがシンプル
+2つのクラスにわかれる
 
 ```dart
-// StatefulWidgetの場合（冗長）
-class MyForm extends StatefulWidget {
+// カートの状態を管理するNotifier
+@riverpod
+class Cart extends _$Cart {
   @override
-  _MyFormState createState() => _MyFormState();
-}
-class _MyFormState extends State<MyForm> {
-  late TextEditingController controller;
-  @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController();
+  List<CartItem> build() {
+    // 初期状態：ダミーの商品データ
+    return [
+      CartItem(id: '1', name: '高性能ヘッドホン', price: 25000),
+      CartItem(id: '2', name: 'ワイヤレスマウス', price: 5800),
+      CartItem(id: '3', name: 'メカニカルキーボード', price: 12000),
+    ];
   }
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+
+  // 商品の選択・未選択を切り替えるロジック
+  void toggleSelection(String id) {
+    // 現在のリスト（state）を元に、特定のアイテムだけ書き換えた新しいリストを作成
+    state = [
+      for (final item in state)
+        if (item.id == id)
+          item.copyWith(isSelected: !item.isSelected)
+        else
+          item,
+    ];
   }
-  // ...
 }
+
+// UI部分（カート画面）
+class CartView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // カートの状態（商品リスト）を監視
+    final cartItems = ref.watch(cartProvider);
+
+    // 宣言的にUIを構築される
+    return ListView.builder(
+      itemCount: cartItems.length,
+      itemBuilder: (context, index) {
+        final item = cartItems[index];
+        return CheckboxListTile(
+          title: Text(item.name),
+          subtitle: Text('¥${item.price}'),
+          value: item.isSelected,
+          onChanged: (value) {
+            // Notifierのメソッドを呼び出して状態を更新
+            ref.read(cartProvider.notifier).toggleSelection(item.id);
+          },
+        );
+      },
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
 ```
 
-```dart
-// HookWidgetの場合（簡潔）
-class MyForm extends HookWidget {
-  @override
-  Widget build(BuildContext context) {
-    final controller = useTextEditingController();
-    return TextField(controller: controller);
-  }
-}
-```
+
+
 
 ---
 
-# App State（アプリケーション状態）
-
-## アプリケーション全体で共有し、セッション間で保持する状態
-
-**例:**
-- ユーザー設定
-- ログイン情報
-- SNSの通知
-- ECサイトのカート
-- ニュースアプリの既読/未読状態
+## Ephemeral State はWidget内部で管理、<br>App State はWidget外部で管理する💡
 
 ---
 
-# App Stateの影響範囲
+## App State のために、クラスが増えてきたら？
+## クラスの責務を切り分けるために<br>Flutterのアーキテクチャパターンはなにがある？🤔
 
-## ログイン状態やカートの例で広範な影響範囲を理解する
+---
 
-**ログイン状態の例:**
-- 複数画面でユーザー情報を表示
-- ログアウト時に全画面に影響
+## MVVM + Repositoryパターン
 
-**カートの例:**
-- 商品一覧、詳細、カート画面で共有
-- どこからでも商品を追加/削除
+- 公式のFlutter documentationで紹介されているパターン
+- まずは、UIレイヤーとDataレイヤーに分離
+- アプリの成長に合わせて、ユースケースやドメインなどのレイヤーを追加していく
+
+![](https://docs.flutter.dev/assets/images/docs/app-architecture/guide/mvvm-intro-with-layers.png)
+
+<small>参照：[Guide to app architecture](https://docs.flutter.dev/app-architecture/guide)</small>
 
 ---
 
@@ -177,188 +317,58 @@ View ←→ ViewModel ←→ Model
 ```
 
 **MVVMの3層構成:**
-- **Model:** ビジネスロジックとデータ
-- **View:** UIの表示
+- **Model:** ビジネスロジックとデータを担当
+- **View:** UIの表示に専念
 - **ViewModel:** ViewとModelの橋渡し
 
 ---
 
-# MVVMの責務分離
+> ## Ephemeral State はWidget内部で管理、<br>App State はWidget外部で管理する💡
 
-## 各層が明確な役割を持つことでテストと保守が容易に
+↓
 
-**Model:**
-- ビジネスロジックを担当
-- データの取得・保存
-- UIに依存しない
+## Ephemeral State は **View** で管理、<br>App Stateは **ViewModel** で管理する💡
 
-**ViewModel:**
-- Viewに必要な状態を保持
-- ユーザー操作を受けてModelを呼び出す
-- Viewに表示用のデータを提供
-
-**View:**
-- UIの構築のみに専念
-- ViewModelの状態を監視して表示
-- ユーザー操作をViewModelに通知
+→ App State のために、クラスが増えてきたら、MVVMパターンで責務を切り分ける
 
 ---
 
-# Repositoryパターンの追加
+## Ephemeral State と App State の責務を明確に分けること<br>MVVMパターンで責務を切り分けること
 
-## Repositoryでデータソースの実装を分離
-
-```
-View ←→ ViewModel ←→ Repository ←→ DataSource
-```
-
-**Repositoryの役割:**
-- データソース（API、DB）の抽象化
-- DTOをドメインモデルに変換
-- データキャッシュの管理
+→ 状態管理に迷わなくなり、効率的な開発が可能になる✨
 
 ---
 
-# Widgetの選択フローチャート
-
-## 状態の種類に応じて適切なWidgetを選択する
-
-```mermaid
-flowchart TD
-    Start([Widgetの作成]) --> Q1{外部状態やロジック<br/>'ref' を利用するか?}
-
-    Q1 -- いいえ --> Q2{UI固有の内部状態<br/>'Ephemeral state' が必要か?}
-    Q2 -- いいえ --> SW["StatelessWidget<br/>(純粋な共通部品)"]
-    Q2 -- はい --> HW["HookWidget<br/>(アニメーション/表示切替等)"]
-
-    Q1 -- はい --> Q3{UI固有の内部状態<br/>'Ephemeral state' が必要か?}
-    Q3 -- いいえ --> CW["ConsumerWidget<br/>(基本 / MVVMのView)"]
-    Q3 -- はい --> Q4{"Hooksで管理可能か?<br/>(コントローラー等)"}
-    Q4 -- はい --> HCW["HookConsumerWidget<br/>(入力フォーム/編集画面等)"]
-    Q4 -- いいえ --> CSW["ConsumerStatefulWidget<br/>(複雑なライフサイクル/継承)"]
-```
+## ただ、継承すべきWidgetの種類が多くて迷う...🤔
 
 ---
 
-# Widget使い分け一覧
-
-## 各Widgetの特徴を一目で把握する
+### 各Widgetを特徴で使い分ける
 
 | Widget名 | 外部状態(ref) | 内部状態(Hooks/State) | 主なユースケース | MVVMにおける役割 |
 |---------|-------------|---------------------|---------------|----------------|
-| StatelessWidget | ❌ | ❌ | 共通ボタン、単純なレイアウト | 純粋なUIコンポーネント |
+| StatelessWidget | ❌ | ❌ | 共通ボタン、単純レイアウト | UIコンポーネント |
 | HookWidget | ❌ | ✅(Hooks) | アニメーション、表示のON/OFF | 内部ロジックを持つUI |
 | ConsumerWidget | ✅ | ❌ | プロフィール表示、商品一覧 | MVVMの標準的なView |
 | HookConsumerWidget | ✅ | ✅(Hooks) | 入力フォーム、検索窓 | 編集機能を持つView |
 | ConsumerStatefulWidget | ✅ | ✅(State) | 複雑なライフサイクル、Mixin利用 | 特殊な要件のView |
 
----
-
-# MVVMを厳格に守る場合の推奨
-
-## ビジネスロジックはすべてViewModelへ
-
-MVVMを厳格に守る場合:
-- 多くの画面は**ConsumerWidget**で完結
-- 入力フォームがある画面は**HookConsumerWidget**
-
-効率的な開発が可能
+※[flutter_hooks](https://pub.dev/packages/flutter_hooks)を利用している想定
 
 ---
 
-# ConsumerWidget実装例
+### Widget選び 状態管理に迷わないためのフローチャート
 
-## ViewModelの状態を監視してUIを構築
-
-```dart
-class TodoListView extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final todos = ref.watch(todosProvider);
-    
-    return ListView(
-      children: [
-        for (final todo in todos)
-          CheckboxListTile(
-            value: todo.completed,
-            onChanged: (value) => 
-              ref.read(todosProvider.notifier).toggle(todo.id),
-            title: Text(todo.description),
-          ),
-      ],
-    );
-  }
-}
-```
+<img height="550px" src="image03.png" alt="Widget Selection Flowchart" />
 
 ---
-
-# AsyncNotifier実装例
-
-## 非同期処理とSSOT（Single Source of Truth）の実現
-
-```dart
-@riverpod
-class PackageMetrics extends _$PackageMetrics {
-  @override
-  Future<PackageMetricsScore> build({required String packageName}) =>
-    ref.watch(pubRepositoryProvider)
-      .getPackageMetrics(packageName: packageName);
-
-  Future<void> like() async {
-    await ref.read(pubRepositoryProvider).like(packageName: packageName);
-    ref.invalidateSelf();  // 自身を再取得
-    ref.invalidate(likedPackagesProvider);  // 関連する状態も再取得
-  }
-}
-```
-
----
-
-# アーキテクチャの拡張
-
-## 単一画面の話からプロジェクト全体への広がり
-
-**4層レイヤードアーキテクチャ:**
-- **Presentation（UI）:** View、ViewModel
-- **Application（UseCase）:** ユースケース層
-- **Domain（ビジネスロジック）:** ドメインモデル
-- **Data（Repository、API）:** データソース
-
-feature-firstの構成を推奨
-
----
-
-# feature-firstディレクトリ構成
-
-## 機能ごとにディレクトリを分け、関連するコードを近づける
-
-```
-lib/
-  ui/
-    <feature_name>/
-      view_models/
-      widgets/
-  domain/
-    models/
-  data/
-    repositories/
-    services/
-```
-
----
-
-# 明日から実践すること
 
 ## 状態管理の原則を守り、責務をシンプルに保つ
 
-- **UIは宣言的に書くこと**
-- **Viewに必要な状態をViewModelに切り分け、責務をシンプルにする**
-- **状態がUIの内部で完結するか見極める**
-- **Widget内部だけで扱える状態は内部で完結させる**
-- **そうでない状態はWidget外で管理する**
-
-> Widget の内部だけで扱えば良い状態は内部で簡潔させ、そうでない状態は Widget 外で管理する
+- **UI は宣言的に書くこと `UI = f(state)`**
+- **UI の状態が Ephemeral state か App state か見極めること**
+- **View に必要な状態を内部で完結するか見極めること**
+- **内部で完結しない状態は ViewModel に切り分け、責務をシンプルにすること**
 
 ---
 
@@ -367,11 +377,8 @@ lib/
 ## さらに学ぶためのリソース
 
 **公式ドキュメント:**
-- Riverpod公式: https://riverpod.dev/ja/
-- Flutter State management: https://docs.flutter.dev/data-and-backend/state-mgmt
+- Riverpod公式: [Riverpod](https://riverpod.dev/ja/)
+- Flutter公式: [State management](https://docs.flutter.dev/data-and-backend/state-mgmt)
 
 **参考記事:**
-- Differentiate between ephemeral state and app state
-- draw_your_image を「宣言的」に使えるように作り直した話
-
-
+- [【Flutter】draw_your_image を「宣言的」に使えるように作り直した話](https://zenn.dev/chooyan/articles/90590004a4c451)

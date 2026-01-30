@@ -341,9 +341,13 @@ View ←→ ViewModel ←→ Model
 
 ## ただ、継承すべきWidgetの種類が多くて迷う...🤔
 
+StatelessWidget?<br>HookWidget?<br>ConsumerWidget?<br>HookConsumerWidget?<br>ConsumerStatefulWidget?
+
 ---
 
-### 各Widgetを特徴で使い分ける
+#### 各Widgetを特徴で使い分ける
+
+<br>
 
 | Widget名 | 外部状態(ref) | 内部状態(Hooks/State) | 主なユースケース | MVVMにおける役割 |
 |---------|-------------|---------------------|---------------|----------------|
@@ -353,7 +357,9 @@ View ←→ ViewModel ←→ Model
 | HookConsumerWidget | ✅ | ✅(Hooks) | 入力フォーム、検索窓 | 編集機能を持つView |
 | ConsumerStatefulWidget | ✅ | ✅(State) | 複雑なライフサイクル、Mixin利用 | 特殊な要件のView |
 
-※[flutter_hooks](https://pub.dev/packages/flutter_hooks)を利用している想定
+<br>
+
+<small>※[hooks_riverpod](https://pub.dev/packages/hooks_riverpod)を利用している想定</small>
 
 ---
 

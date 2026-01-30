@@ -24,7 +24,7 @@ style: |
 - 「次の角を右に曲がって、100m進んで、そこで止まってください」
 - ひとつずつ結果を得るための段取りを指示する。
 
-![](image01.png)
+![](assets/image01.png)
 
 ---
 
@@ -34,7 +34,7 @@ style: |
 - 「東京駅に行ってください」
 - 結果だけ伝える。ルート（更新処理）はフレームワークが担当
 
-![](image02.png)
+![](assets/image02.png)
 
 ---
 
@@ -359,7 +359,7 @@ View ←→ ViewModel ←→ Model
 
 ### Widget選び 状態管理に迷わないためのフローチャート
 
-<img height="550px" src="image03.png" alt="Widget Selection Flowchart" />
+<img height="550px" src="assets/image03.png" alt="Widget Selection Flowchart" />
 
 ---
 
